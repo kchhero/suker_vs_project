@@ -67,6 +67,11 @@ int blocks[7][4][4][4] = {
     }
 };
 
+SDL_Color colors[] = {
+        {50,50,100}, {255,0,0}, {0,255,0}, {0,0,255},
+        {255,255,0}, {255,0,255}, {0,255,255}, {255,128,0}
+};
+
 int board[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 tetris current, next;
 int score = 0;
@@ -86,10 +91,6 @@ void draw_block(int x, int y, SDL_Color color) {
 }
 
 void draw_board() {
-    SDL_Color colors[] = {
-        {0,0,0}, {255,0,0}, {0,255,0}, {0,0,255},
-        {255,255,0}, {255,0,255}, {0,255,255}, {255,128,0}
-    };
     for (int y = 0; y < BOARD_HEIGHT; y++) {
         for (int x = 0; x < BOARD_WIDTH; x++) {
             draw_block(x, y, colors[board[y][x]]);
@@ -97,11 +98,11 @@ void draw_board() {
     }
 }
 
-void draw_tetris(tetris t, SDL_Color color) {
+void draw_tetris(tetris t) {
     for (int dy = 0; dy < 4; dy++) {
         for (int dx = 0; dx < 4; dx++) {
             if (blocks[t.shape][t.rotation][dy][dx]) {
-                draw_block(t.x + dx, t.y + dy, color);
+                draw_block(t.x + dx, t.y + dy, colors[t.shape]);
             }
         }
     }
@@ -129,7 +130,7 @@ void place_tetris() {
                 int x = current.x + dx;
                 int y = current.y + dy;
                 if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
-                    board[y][x] = current.shape + 1;
+                    board[y][x] = current.shape;// +1;
                 }
             }
         }
@@ -166,8 +167,7 @@ void place_tetris() {
 
 void draw_info_panel() {
     SDL_Color text_color = { 255, 255, 255 };
-    SDL_Color bg_color = { 32, 32, 32 };
-    SDL_Color _temp_color = { 200, 200, 200, 0 };
+    SDL_Color bg_color = { 32, 32, 32 };    
 
     // Info Panel 배경
     SDL_FRect panel = { BOARD_WIDTH * BLOCK_SIZE, 0, INFO_WIDTH * BLOCK_SIZE, SCREEN_HEIGHT };
@@ -178,7 +178,7 @@ void draw_info_panel() {
     tetris preview = next;
     preview.x = BOARD_WIDTH + 1;
     preview.y = 2;
-    draw_tetris(preview, _temp_color);
+    draw_tetris(preview);
 
     // 점수 및 남은 블럭은 간단히 사각형 칸으로 표현 (폰트 없으므로 생략)
     for (int i = 0; i < score / 100; i++) {
@@ -255,7 +255,7 @@ int main() {
         SDL_RenderClear(renderer);
         draw_board();
         SDL_Color _temp_color = { 255, 255, 255, 0 };
-        draw_tetris(current, _temp_color);
+        draw_tetris(current);
         draw_info_panel();
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
