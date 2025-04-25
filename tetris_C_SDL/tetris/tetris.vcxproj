@@ -109,13 +109,18 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\suker\MYSRC\tools\SDL3-3.2.10\include;C:\Users\suker\MYSRC\tools\SDL3-3.2.10\include\SDL3</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\suker\MYSRC\tools\SDL3-3.2.10\lib;C:\Users\suker\MYSRC\tools\SDL3-3.2.10\lib\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy C:\Users\suker\MYSRC\tetris\wav\*.* $(TargetDir) /Y /K
+xcopy C:\Users\suker\MYSRC\tetris\lib\$(PlatformShortName)\SDL3.dll $(TargetDir) /Y /K</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -126,18 +131,28 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\suker\MYSRC\tools\SDL3-3.2.10\include;C:\Users\suker\MYSRC\tools\SDL3-3.2.10\include\SDL3</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\suker\MYSRC\tools\SDL3-3.2.10\lib;C:\Users\suker\MYSRC\tools\SDL3-3.2.10\lib\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy C:\Users\suker\MYSRC\tetris\wav\*.* $(TargetDir) /Y /K
+xcopy C:\Users\suker\MYSRC\tetris\lib\$(PlatformShortName)\SDL3.dll $(TargetDir) /Y /K</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="audio.cpp" />
     <ClCompile Include="tetris.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="audio.h" />
+    <ClInclude Include="tetris.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

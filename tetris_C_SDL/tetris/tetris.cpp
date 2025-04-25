@@ -1,76 +1,8 @@
-#include <SDL3/SDL.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include "tetris.h"
+#include "audio.h"
 
-#define BOARD_WIDTH 10
-#define BOARD_HEIGHT 20
-#define BLOCK_SIZE 24
-#define INFO_WIDTH 6  // 추가 공간
-#define SCREEN_WIDTH ((BOARD_WIDTH + INFO_WIDTH) * BLOCK_SIZE)
-#define SCREEN_HEIGHT (BOARD_HEIGHT * BLOCK_SIZE)
-
-typedef struct {
-    int x, y;
-    int shape;
-    int rotation;
-} tetris;
-int blocks[7][4][4][4] = {
-    // I
-    {
-        {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}},
-        {{0,0,1,0},{0,0,1,0},{0,0,1,0},{0,0,1,0}},
-        {{0,0,0,0},{0,0,0,0},{1,1,1,1},{0,0,0,0}},
-        {{0,1,0,0},{0,1,0,0},{0,1,0,0},{0,1,0,0}}
-    },
-    // O
-    {
-        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}
-    },
-    // T
-    {
-        {{0,1,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,0,0},{0,1,1,0},{0,1,0,0},{0,0,0,0}},
-        {{0,0,0,0},{1,1,1,0},{0,1,0,0},{0,0,0,0}},
-        {{0,1,0,0},{1,1,0,0},{0,1,0,0},{0,0,0,0}}
-    },
-    // L
-    {
-        {{0,0,1,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,0,0},{0,1,0,0},{0,1,1,0},{0,0,0,0}},
-        {{0,0,0,0},{1,1,1,0},{1,0,0,0},{0,0,0,0}},
-        {{1,1,0,0},{0,1,0,0},{0,1,0,0},{0,0,0,0}}
-    },
-    // J
-    {
-        {{1,0,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,1,0},{0,1,0,0},{0,1,0,0},{0,0,0,0}},
-        {{0,0,0,0},{1,1,1,0},{0,0,1,0},{0,0,0,0}},
-        {{0,1,0,0},{0,1,0,0},{1,1,0,0},{0,0,0,0}}
-    },
-    // S
-    {
-        {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}},
-        {{0,1,0,0},{0,1,1,0},{0,0,1,0},{0,0,0,0}},
-        {{0,0,0,0},{0,1,1,0},{1,1,0,0},{0,0,0,0}},
-        {{1,0,0,0},{1,1,0,0},{0,1,0,0},{0,0,0,0}}
-    },
-    // Z
-    {
-        {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}},
-        {{0,0,1,0},{0,1,1,0},{0,1,0,0},{0,0,0,0}},
-        {{0,0,0,0},{1,1,0,0},{0,1,1,0},{0,0,0,0}},
-        {{0,1,0,0},{1,1,0,0},{1,0,0,0},{0,0,0,0}}
-    }
-};
-
-SDL_Color colors[] = {
-        {50,50,100}, {255,0,0}, {0,255,0}, {0,0,255},
-        {255,255,0}, {255,0,255}, {0,255,255}, {255,128,0}
-};
+AudioData bgm_data;
+SDL_AudioDeviceID bgm_dev = 0;
 
 int board[BOARD_HEIGHT][BOARD_WIDTH] = { 0 };
 tetris current, next;
@@ -79,10 +11,6 @@ int remaining = 30;
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-SDL_AudioDeviceID audio_device = 0;
-SDL_AudioSpec audio_spec;
-Uint8* audio_buf = NULL;
-Uint32 audio_len = 0;
 
 void draw_block(int x, int y, SDL_Color color) {
     SDL_FRect rect = { x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1 };
@@ -135,11 +63,6 @@ void place_tetris() {
             }
         }
     }
-
-    // 사운드 재생
-    /*SDL_LockAudioDevice(audio_device);
-    SDL_QueueAudio(audio_device, audio_buf, audio_len);
-    SDL_PauseAudioDevice(audio_device, 0);*/
 
     // 라인 제거
     for (int y = 0; y < BOARD_HEIGHT; y++) {
@@ -198,10 +121,7 @@ int main() {
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     window = SDL_CreateWindow("TetrisSimple", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     renderer = SDL_CreateRenderer(window, NULL);
-
-    //SDL_LoadWAV("drop.wav", &audio_spec, &audio_buf, &audio_len);
-    //audio_device = SDL_OpenAudioDevice(NULL, 0, &audio_spec, NULL, 0);
-
+        
     srand((unsigned int)time(NULL));
     current.shape = rand() % 7;
     current.rotation = 0;
@@ -214,6 +134,18 @@ int main() {
 
     Uint32 last_tick = SDL_GetTicks();
     int running = 1;
+
+    //audio init
+	if (audio_init() < 0) {
+		SDL_Log("Audio init failed: %s", SDL_GetError());
+		return -1;
+	}
+
+    //audio play start
+	if (audio_play() < 0) {
+		SDL_Log("Audio play failed: %s", SDL_GetError());
+		return -1;
+	}
 
     while (running && remaining > 0) {
         SDL_Event e;
@@ -261,8 +193,7 @@ int main() {
         SDL_Delay(16);
     }
 
-    SDL_CloseAudioDevice(audio_device);
-    //SDL_FreeWAV(audio_buf);
+    audio_stop();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
